@@ -29,7 +29,14 @@ module Guard
       def run(paths, options = {})
         message = options[:message] || "Running: #{paths.join(' ')}"
         UI.info message, :reset => true
-        status = system(minitest_command(paths))
+        cmd = minitest_command(paths)
+        # Zeus should never be in the Gemfile
+        if defined?(Bundler) && zeus? 
+          status = Bundler.with_clean_env { system(cmd) }
+        else
+          status = system(cmd)
+        end
+        
         # When using zeus, the Guard::Minitest::Reporter can't be used because the minitests run in the zeus process.
         # We can use the exit status of the zeus client process though to distinguish between :success and :failed
         if zeus?
